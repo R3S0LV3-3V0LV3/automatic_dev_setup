@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.pyc
+.python-version
+*.egg-info/
+build/
+dist/
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env/
+
+# Data artifacts
+data/raw/
+data/interim/
+data/processed/
+models/
+results/
+
+# Notebooks
+.ipynb_checkpoints/
+
+# VSCode
+.vscode/
+
+# macOS
+.DS_Store

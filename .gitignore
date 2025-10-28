@@ -1,0 +1,66 @@
+# macOS System Files
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# IDE and Editor Files
+.idea/
+*.swp
+*.swo
+*~
+.vscode/
+*.sublime-project
+*.sublime-workspace
+.gemini/
+__for_any_cli/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+
+# Logs and Temporary Files
+*.log
+logs/
+*.tmp
+*.bak
+*.backup
+*.old
+special_files/24102025_VM_logs/
+special_files/vm-audit-findings-*.txt
+
+# Security and Credentials
+*.pem
+*.key
+.env.local
+.env.*.local
+secrets/
+
+# Generated Files
+dependency-graph.png
+dependency-graph.dot
+SETUP_AUDIT_REPORT.md
+
+# Test Coverage
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+coverage.xml
+*.cover
+
+# Backup Files
+*.bak-*

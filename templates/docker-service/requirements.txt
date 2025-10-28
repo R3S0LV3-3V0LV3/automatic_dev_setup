@@ -1,0 +1,2 @@
+# Populate with application dependencies, e.g.:
+# fastapi==0.111.0
