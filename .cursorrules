@@ -1,0 +1,223 @@
+# Automatic Dev Setup - Cursor AI Coding Style Rules
+
+## Shell Script Standards
+
+### Strict Mode Enforcement
+- **Always** use `set -Eeuo pipefail` at the top of every shell script
+- **Always** set `IFS=$'\n\t'` immediately after strict mode
+- Never modify these settings within the script body
+
+### Header Block Format
+- Begin every script with a 77-character divider line: `# =============================================================================`
+- Include standard header fields:
+  - Purpose: Brief description of the script's function
+  - Version: Semantic version (e.g., 3.0.0)
+  - Dependencies: List of required commands
+  - Criticality: ALPHA/BETA/STABLE
+- End header block with another 77-character divider line
+
+### Function Naming Conventions
+- Public functions use `ads_*` prefix (e.g., `ads_append_once`, `ads_require_command`)
+- Function names follow verb-noun pattern (e.g., `ads_ensure_directory`, `ads_record_failure_event`)
+- Private/internal functions use `_ads_*` prefix (e.g., `_ads_log`, `_ads_timestamp`)
+- Local utility functions may omit prefix if clearly scoped within a single script
+
+### Variable Naming Hierarchy
+- **Persistent/Configuration variables**: `ALL_CAPS` with optional prefix (e.g., `ADS_LOG_ROOT`, `ADS_MAX_RETRIES`)
+- **Local variables**: `snake_case` (e.g., `local timestamp`, `local exit_code`)
+- **Array variables**: Follow same pattern as scalar variables (e.g., `ADS_MODULES`, `SKIP_MODULES`)
+- Always declare local variables with `local` keyword before first use
+
+### Conditional Syntax
+- **Exclusively** use `[[ ]]` for conditionals (never `[ ]` or `test`)
+- **Always** quote variable expansions within conditionals (e.g., `[[ -z "$var" ]]`)
+- Prefer guard clauses for early returns: `[[ -z "$var" ]] && { log_error "message"; return 1; }`
+- Use arithmetic conditionals with `(( ))` for numeric comparisons: `(( attempt <= ADS_MAX_RETRIES ))`
+
+### Parameter Expansion Patterns
+- Default values: `${var:-default}` (e.g., `ADS_LOG_ROOT="${ADS_LOG_ROOT:-$HOME/.automatic_dev_setup/logs}"`)
+- Error on unset: `${var:?error message}` (use sparingly, prefer graceful defaults)
+- Substring/pattern matching: Use standard Bash parameter expansion features
+- **Always** quote parameter expansions unless explicitly requiring word splitting
+
+### Command Substitution
+- **Always** use `$()` syntax, never backticks
+- Prefer command substitution over process substitution when possible
+- Quote command substitutions when assigning to variables: `local result=$(command)`
+
+### Guard Clauses Pattern
+- Use guard clauses for input validation and early returns
+- Format: `[[ condition ]] && { log_error "message"; return 1; }`
+- Group related guards together at function start
+
+### Local Variable Declaration
+- Declare all local variables at the start of a function
+- Separate declarations with blank lines for readability when grouping related variables
+- Use descriptive names that indicate purpose
+
+### Retry Mechanism Pattern
+- Use standardized retry logic with configurable attempts and delays
+- Pattern: `ads_retry "label" command [args...]`
+- Log each attempt with appropriate log level
+- Return exit code from final attempt
+
+### Logging Taxonomy
+Use these logging functions exclusively:
+- `log_header()` - Section headers and major milestones
+- `log_info()` - General informational messages
+- `log_success()` - Successful operations
+- `log_warning()` - Warning conditions that don't halt execution
+- `log_error()` - Error conditions that may halt execution
+- `log_fatal()` - Fatal errors that cause immediate exit
+- `log_debug()` - Debug messages (only when `ADS_DEBUG=1` or `DEBUG=1`)
+- `log_performance()` - Performance metrics (takes label and duration)
+
+## Documentation Standards
+
+### British English Orthography
+- Use `-ise` endings, not `-ize` (e.g., "optimise", "recognise", "organise")
+- Use `-our` endings, not `-or` (e.g., "colour", "behaviour", "favour")
+- Use `-re` endings, not `-er` (e.g., "centre", "metre")
+- Exception: Technical terms may use American spelling when widely accepted (e.g., "optimize" in code comments)
+
+### Punctuation Preferences
+- Prefer em-dashes (—) over parentheses for explanatory asides
+- Use semicolons to connect related clauses; avoid overuse
+- Use serial commas in lists (Oxford comma)
+
+### Comment Philosophy
+- **Explain *why*, not *what*** - Comments should provide context and reasoning
+- Target ratio: ~1 comment per 5 lines of code (guide, not strict rule)
+- Comments should illuminate non-obvious decisions, edge cases, and historical context
+- Avoid redundant comments that merely restate the code
+
+### Section Header Format
+- Use 77-character divider lines for major sections
+- Format: `# =============================================================================`
+- Place section headers on their own lines with blank lines above and below
+
+### README Structure Blueprint
+- Title with brief description
+- Badges (platform, version, license)
+- "What This Actually Does" section with bullet points
+- Prerequisites
+- Quick Start guide with code examples
+- Detailed feature lists
+- Configuration options
+- Project structure
+- Troubleshooting references
+
+## Code Quality
+
+### Idempotency Design Pattern
+- All operations must be idempotent (safe to run multiple times)
+- Check for existing state before making changes
+- Use `ads_append_once` for file modifications
+- Use `ads_ensure_directory` for directory creation
+
+### Defensive Path Resolution
+- Always resolve script paths using: `readlink -f` or `perl -MCwd=abs_path` fallback
+- Normalize directory paths: `SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_PATH")" && pwd)"`
+- Use `REPO_ROOT` or `SUITE_ROOT` for workspace-relative paths
+
+### Interactive Prompts Pattern
+- Use `prompt_yes_no "message" [default]` function pattern
+- Provide sensible defaults (typically "N" for destructive operations)
+- Clear messaging about consequences
+
+### ShellCheck Compliance
+- Zero-warning doctrine: All scripts must pass ShellCheck without warnings
+- Use `# shellcheck disable=SC####` sparingly and only with justification comments
+- Prefer fixing warnings over disabling them
+
+### Indentation
+- **4 spaces** per indentation level (never tabs)
+- Use spaces for all indentation, including continuation lines
+- Maintain consistent indentation within code blocks
+
+### Line Length
+- Soft cap: 100 characters
+- Hard limit: 120 characters
+- Break long lines at logical points (operators, commas, after keywords)
+- Use backslash continuation for multi-line commands with proper indentation
+
+### Blank Line Semantics
+- Single blank line between functions
+- Double blank lines before major sections
+- Single blank line between related variable declarations
+- No blank lines between guard clauses in a group
+
+### File Naming
+- Hyphenated lowercase: `automatic-dev-logging.sh`
+- Sequential prefixes for ordered scripts: `00-`, `01-`, etc.
+- Descriptive names that indicate purpose
+- `.sh` extension for all shell scripts
+
+## Architectural Patterns
+
+### Modular Decomposition
+- Keep scripts focused on a single responsibility
+- Split complex operations into separate functions
+- Group related functions into library files (`lib/` directory)
+
+### Library Abstraction Strategy
+- Core utilities in `lib/automatic-dev-core.sh`
+- Domain-specific utilities in dedicated files (logging, error handling, validation)
+- Source libraries using relative paths: `source "$SCRIPT_DIR/../lib/automatic-dev-logging.sh"`
+
+### DRY Principle Enforcement
+- Extract repeated patterns into functions
+- Use configuration variables for magic numbers and repeated strings
+- Share common logic through library functions
+
+### Configuration Isolation
+- Store configuration in `automatic-dev-config.env`
+- Use environment variables with default values: `${VAR:-default}`
+- Document all configuration variables in header comments
+
+## Error Handling
+
+### Error Handling Patterns
+- Use `ads_enable_traps` to set up error handlers
+- Record all failures using `ads_record_failure_event`
+- Provide actionable error messages with references to documentation
+- Use appropriate log levels for different error severities
+
+### Exit Codes
+- Return 0 on success
+- Return 1 on non-fatal errors
+- Use `log_fatal` for fatal errors (automatically exits with code 1)
+- Document expected exit codes in function comments
+
+## Testing & Validation
+
+### Test Structure
+- Test scripts should follow same conventions as production scripts
+- Use descriptive test function names: `test_function_name()`
+- Log test results using standard logging functions
+- Exit with appropriate codes (0 for all tests passed, 1 for failures)
+
+## Performance Considerations
+
+### Performance Logging
+- Use `ads_measure` function for timing operations
+- Log performance metrics with `log_performance`
+- Consider parallelisation for independent operations
+- Profile before optimising
+
+## Security Posture
+
+### Credential Safety
+- Never hardcode credentials or API keys
+- Use environment variables for sensitive data
+- Document security-sensitive operations clearly
+
+### Permission Management
+- Request elevated permissions only when necessary
+- Use `ads_require_sudo` for operations requiring admin access
+- Document why sudo is required
+
+### Input Validation
+- Validate all user inputs and external data
+- Use guard clauses to prevent invalid operations
+- Sanitise inputs before use in commands
