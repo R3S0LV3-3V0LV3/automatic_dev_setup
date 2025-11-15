@@ -17,6 +17,21 @@
 .gemini/
 __for_any_cli/
 
+# AI tooling & audits
+WARP.md
+WARP/
+warp/
+.warp/
+codex/
+Codex/
+.codex/
+*.codex
+ai/
+.ai/
+__ai__/
+__coding_signature.md
+__ultra_strict_evaluation_system.md
+
 # Python
 __pycache__/
 *.py[cod]

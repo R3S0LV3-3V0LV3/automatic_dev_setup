@@ -13,6 +13,9 @@ IFS=$'\n\t'
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$REPO_ROOT"
 
+source "$REPO_ROOT/lib/automatic-dev-env.sh"
+ads_enable_traps
+
 # Parse arguments
 UPDATE_BASH=0
 for arg in "$@"; do
@@ -30,70 +33,56 @@ for arg in "$@"; do
     esac
 done
 
-echo "[Preflight] Clearing Gatekeeper quarantine attributes (if present)..."
-xattr -dr com.apple.quarantine . 2>/dev/null || true
-
-if command -v chmod >/dev/null 2>&1; then
-    echo "[Preflight] Normalising permissions..."
-    chmod -RN . 2>/dev/null || true
-fi
-
-if command -v chflags >/dev/null 2>&1; then
-    echo "[Preflight] Resetting file flags (may prompt for sudo)..."
-    if ! chflags -R nouchg,noschg . 2>/dev/null; then
-        sudo chflags -R nouchg,noschg .
-    fi
-fi
+log_header "[Preflight] Repository Preparation"
+ads_clear_quarantine "$REPO_ROOT"
 
 # =============================================================================
 # BASH UPDATE FUNCTION
 # =============================================================================
 
 update_bash_from_source() {
-    echo "[Preflight] Right, let's build Bash from source — because Apple's ancient version is... insufficient"
-    
+    log_info "[Preflight] Building Bash from source to keep shells current."
+
     local bash_version="5.2"
     local bash_patch="37"  # Latest stable patches, always
     local temp_dir="/tmp/bash-update-$$"
-    
-    # See what we're working with currently
+
     if [[ -f "/usr/local/bin/bash" ]]; then
+        local current_version
         current_version=$(/usr/local/bin/bash --version | head -n1)
-        echo "[Preflight] Currently running: $current_version"
+        log_info "[Preflight] Current Bash: ${current_version}"
     fi
-    
-    echo "[Preflight] Downloading Bash ${bash_version} with patches..."
-    
+
+    log_info "[Preflight] Downloading Bash ${bash_version} with patches..."
+
     mkdir -p "$temp_dir"
     cd "$temp_dir"
-    
-    # Download base version
-    if ! curl -fsSL -o "bash-${bash_version}.tar.gz" \
-         "https://ftp.gnu.org/gnu/bash/bash-${bash_version}.tar.gz"; then
-        echo "[Preflight] ERROR: Failed to download Bash source"
+
+    local archive="bash-${bash_version}.tar.gz"
+    if ! ads_fetch_with_checksum "$archive" "$temp_dir/$archive"; then
+        log_error "[Preflight] Failed to fetch Bash source with checksum verification."
         cd "$REPO_ROOT"
         rm -rf "$temp_dir"
         return 1
     fi
-    
-    echo "[Preflight] Extracting source..."
-    tar xzf "bash-${bash_version}.tar.gz"
+
+    log_info "[Preflight] Extracting source..."
+    tar xzf "$archive"
     cd "bash-${bash_version}"
-    
-    # Download and apply patches
-    echo "[Preflight] Applying patches (up to patch ${bash_patch})..."
+
+    log_info "[Preflight] Applying patches (up to ${bash_patch})..."
     for i in $(seq 1 "$bash_patch"); do
         patch_num=$(printf "%03d" "$i")
         patch_file="bash${bash_version//./}-${patch_num}"
-        
+
         if curl -fsSL -o "${patch_file}" \
            "https://ftp.gnu.org/gnu/bash/bash-${bash_version}-patches/${patch_file}"; then
-            echo "[Preflight] Applying patch ${patch_num}..."
-            patch -p0 < "$patch_file" >/dev/null 2>&1
+            log_debug "[Preflight] Applying patch ${patch_num}"
+            patch -p0 < "$patch_file" >/dev/null 2>&1 || true
         fi
     done
-    
-    echo "[Preflight] Configuring Bash build..."
+
+    log_info "[Preflight] Configuring Bash build..."
     ./configure --prefix=/usr/local \
                 --enable-alias \
                 --enable-arith-for-command \
@@ -124,30 +113,27 @@ update_bash_from_source() {
                 --enable-separate-helpfiles \
                 --with-installed-readline \
                 >/dev/null 2>&1
-    
-    echo "[Preflight] Building Bash (this may take a few minutes)..."
+
+    log_info "[Preflight] Building Bash (this may take a few minutes)..."
     make -j"$(sysctl -n hw.ncpu)" >/dev/null 2>&1
-    
-    echo "[Preflight] Installing Bash (will prompt for sudo)..."
+
+    log_info "[Preflight] Installing Bash (will prompt for sudo)..."
     sudo make install >/dev/null 2>&1
-    
-    # Add to /etc/shells if not present
+
     if ! grep -q "/usr/local/bin/bash" /etc/shells; then
-        echo "[Preflight] Adding /usr/local/bin/bash to /etc/shells..."
+        log_info "[Preflight] Adding /usr/local/bin/bash to /etc/shells..."
         echo "/usr/local/bin/bash" | sudo tee -a /etc/shells >/dev/null
     fi
-    
-    # Cleanup
+
     cd "$REPO_ROOT"
     rm -rf "$temp_dir"
-    
-    # Verify installation
+
     if [[ -f "/usr/local/bin/bash" ]]; then
+        local new_version
         new_version=$(/usr/local/bin/bash --version | head -n1)
-        echo "[Preflight] SUCCESS: Bash updated to: $new_version"
-        echo "[Preflight] Location: /usr/local/bin/bash"
+        log_success "[Preflight] Bash updated: ${new_version} @ /usr/local/bin/bash"
     else
-        echo "[Preflight] ERROR: Bash installation verification failed"
+        log_error "[Preflight] Bash installation verification failed."
         return 1
     fi
 }
@@ -156,29 +142,61 @@ update_bash_from_source() {
 # MAIN PREFLIGHT OPERATIONS
 # =============================================================================
 
-echo "[Preflight] Clearing Gatekeeper quarantine attributes (if present)..."
-xattr -dr com.apple.quarantine . 2>/dev/null || true
-
-if command -v chmod >/dev/null 2>&1; then
-    echo "[Preflight] Normalising permissions..."
-    chmod -RN . 2>/dev/null || true
-fi
-
-if command -v chflags >/dev/null 2>&1; then
-    echo "[Preflight] Resetting file flags (may prompt for sudo)..."
-    if ! chflags -R nouchg,noschg . 2>/dev/null; then
-        sudo chflags -R nouchg,noschg .
+# Function to make all shell scripts executable
+ads_ensure_executable_scripts() {
+    local count=0
+    local script_dir="${1:-$REPO_ROOT}"
+    
+    log_info "[Preflight] Ensuring all shell scripts are executable..."
+    
+    # Method 1: Try using find with -exec (most portable)
+    if command -v find >/dev/null 2>&1; then
+        while IFS= read -r -d '' file; do
+            if [[ -f "$file" && ! -x "$file" ]]; then
+                chmod +x "$file"
+                ((count++))
+                log_debug "[Preflight] Made executable: $file"
+            fi
+        done < <(find "$script_dir" -type f -name '*.sh' -print0 2>/dev/null)
     fi
-fi
+    
+    # Method 2: Fallback to glob patterns if find fails
+    if [[ $count -eq 0 ]]; then
+        # Handle root level .sh files
+        for file in "$script_dir"/*.sh; do
+            if [[ -f "$file" && ! -x "$file" ]]; then
+                chmod +x "$file"
+                ((count++))
+            fi
+        done
+        
+        # Handle subdirectory .sh files
+        for file in "$script_dir"/**/*.sh; do
+            if [[ -f "$file" && ! -x "$file" ]]; then
+                chmod +x "$file"
+                ((count++))
+            fi
+        done
+    fi
+    
+    # Also ensure the automatic-dev-config.env is readable (it's sourced but not executed)
+    if [[ -f "$script_dir/automatic-dev-config.env" ]]; then
+        chmod 644 "$script_dir/automatic-dev-config.env"
+    fi
+    
+    if [[ $count -gt 0 ]]; then
+        log_success "[Preflight] Made $count shell scripts executable"
+    else
+        log_info "[Preflight] All shell scripts already executable"
+    fi
+}
 
-echo "[Preflight] Ensuring all shell scripts are executable..."
-while IFS= read -r -d '' file; do
-    chmod 755 "$file"
-done < <(find . -type f -name '*.sh' -print0)
+# Execute the function
+ads_ensure_executable_scripts "$REPO_ROOT"
 
 # Update Bash if requested
 if [[ $UPDATE_BASH -eq 1 ]]; then
     update_bash_from_source
 fi
 
-echo "[Preflight] Complete. You can now run ./install.sh"
+log_success "[Preflight] Complete. You can now run ./install.sh"

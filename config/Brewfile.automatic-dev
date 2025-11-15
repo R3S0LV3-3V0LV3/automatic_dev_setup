@@ -44,7 +44,6 @@ brew "hyperfine"  # Command-line benchmarking tool
 brew "glow"  # Terminal markdown renderer
 brew "entr"  # Run commands when files change
 brew "mkcert"  # Local HTTPS certificates
-brew "ngrok"  # Secure tunnels to localhost
 brew "httpie"  # HTTP client
 brew "grpcurl"  # cURL for gRPC
 brew "dive"  # Docker image explorer
@@ -68,7 +67,6 @@ brew "kind"
 brew "colima"
 brew "awscli"
 brew "aws-vault"
-brew "google-cloud-sdk"  # Google Cloud CLI
 brew "hashicorp/tap/terraform"
 brew "kubectx"
 brew "cmake"
@@ -153,6 +151,7 @@ cask "google-chrome"
 # cask "brave-browser"  # REMOVED - per requirements
 cask "tableplus"
 cask "dbeaver-community"
+cask "gcloud-cli" # Google Cloud CLI
 cask "redis-insight"
 cask "postman"
 cask "insomnia"
@@ -170,6 +169,7 @@ cask "vlc"
 cask "spotify"
 cask "handbrake"
 cask "docker"
+cask "ngrok" # Secure tunnels to localhost
 # Optional alternative container runtime (retained alongside Docker for flexibility)
 cask "orbstack"
 

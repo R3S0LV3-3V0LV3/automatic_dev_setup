@@ -43,6 +43,8 @@ main() {
     #test_editor_stack
     #test_shell_startup_time
     test_python_suite
+    test_unit_suite
+    test_version_locks
 
     generate_test_report
     local result=$?

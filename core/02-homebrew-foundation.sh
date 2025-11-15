@@ -83,6 +83,38 @@ prune_deprecated_taps() {
     done
 }
 
+resolve_terraform_conflict() {
+    if brew list --formula terraform >/dev/null 2>&1; then
+        log_warning "Detected existing core terraform formula; removing to avoid tap conflicts."
+        if ! brew uninstall --force terraform >/dev/null 2>&1; then
+            log_error "Failed to remove conflicting terraform formula."
+        fi
+    fi
+}
+
+resolve_mongodb_conflicts() {
+    local desired="mongodb-community@7.0"
+    local installed
+    installed=$(brew list --formula 2>/dev/null | grep '^mongodb-community@' || true)
+    while read -r formula; do
+        [[ -z "$formula" ]] && continue
+        [[ "$formula" == "$desired" ]] && continue
+        log_warning "Removing conflicting MongoDB formula '${formula}' before installing ${desired}."
+        brew uninstall --force "$formula" >/dev/null 2>&1 || log_error "Failed to remove conflicting MongoDB formula '${formula}'."
+    done <<< "$installed"
+
+    if brew list --formula mongodb-community >/dev/null 2>&1; then
+        log_warning "Removing unversioned mongodb-community to prevent symlink conflicts."
+        brew services stop mongodb-community >/dev/null 2>&1 || true
+        brew uninstall --force mongodb-community >/dev/null 2>&1 || log_error "Failed to remove mongodb-community."
+    fi
+}
+
+preflight_package_conflicts() {
+    resolve_terraform_conflict
+    resolve_mongodb_conflicts
+}
+
 tap_repositories() {
     local taps=(
         "mongodb/brew"
@@ -289,6 +321,7 @@ main() {
     install_homebrew
     configure_homebrew_path
     prune_deprecated_taps
+    preflight_package_conflicts
     tap_repositories
     brew_update_and_doctor
     repair_homebrew_formulae

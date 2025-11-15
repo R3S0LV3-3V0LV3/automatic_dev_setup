@@ -187,7 +187,7 @@ arch: aarch64
 features:
   - kubernetes
 mounts:
-  - location: ~/coding_environment
+  - location: ~/__github_repo
     writable: true
 EOF
             log_info "Created default Colima profile with Kubernetes support."

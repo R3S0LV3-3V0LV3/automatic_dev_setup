@@ -148,7 +148,7 @@ export BROWSER='google-chrome'
 export TERMINAL='warp'
 export PAGER='bat'
 export AUTOMATIC_DEV_HOME="$HOME/automatic_dev_setup"
-export CODE_DIR="$HOME/coding_environment"
+export PROJECTS_DIR="${HOME}/__github_repo/projects"
 export PROJECTS_DIR="$CODE_DIR/projects"
 export ADS_CACHE_HOME="$HOME/.automatic_dev_setup"
 export GEM_HOME="$HOME/.gem"
@@ -240,9 +240,9 @@ alias ....='cd ../../..'
 alias .....='cd ../../../..'
 alias ~='cd ~'
 alias -- -='cd -'
-alias cdcode='cd ~/coding_environment'
-alias cdproj='cd ~/coding_environment'
-alias cdtemplates='cd ~/coding_environment/__project_templates'
+alias cdcode='cd ~/__github_repo'
+alias cdproj='cd ~/__github_repo'
+alias cdtemplates='cd ~/__github_repo/__project_templates'
 alias cdads='cd ~/automatic_dev_setup'
 alias cddl='cd ~/Downloads'
 alias cddt='cd ~/Desktop'
@@ -617,12 +617,12 @@ if [[ -d "$AUTOMATIC_DEV_HOME/bin" ]]; then
 fi
 
 # Project directories
-export CODE_DIR="$HOME/coding_environment"
+export CODE_DIR="$HOME/__github_repo"
 export PROJECTS_DIR="$CODE_DIR/projects"
 export ADS_CACHE_HOME="$HOME/.automatic_dev_setup"
 
 # -----------------------------------------------------------------------------
-# System Architecture Flags (Apple Silicon optimization)
+# System Architecture Flags (Apple Silicon optimisation)
 # -----------------------------------------------------------------------------
 export ARCHFLAGS="-arch arm64"
 export CPPFLAGS="-I/opt/homebrew/include"
@@ -723,8 +723,8 @@ elif [ -x "/usr/local/bin/brew" ]; then
   eval "$(/usr/local/bin/brew shellenv)"
 fi
 
-# Project directories
-export CODE_DIR="${HOME}/coding_environment"
+# Workspace directories
+export CODE_DIR="${HOME}/__github_repo"
 export PROJECTS_DIR="${CODE_DIR}/projects"
 export AUTOMATIC_DEV_HOME="${HOME}/automatic_dev_setup"
 
@@ -793,7 +793,8 @@ EOF
 }
 
 create_shell_config_documentation() {
-    local doc_path="$AUTOMATIC_DEV_HOME/docs"
+    local dev_home="${AUTOMATIC_DEV_HOME:-$HOME/automatic_dev_setup}"
+    local doc_path="${dev_home}/docs"
     mkdir -p "$doc_path"
     
     log_info "Creating shell configuration documentation..."

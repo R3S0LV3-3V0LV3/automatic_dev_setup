@@ -114,7 +114,7 @@ project-root/
 - When sample data is required, provide sanitised fixtures under `fixtures/` with clear labels.
 
 ## 8. Onboarding Checklist
-1. Clone the repo into `~/coding_environment`.
+1. Clone the repo into `~/__github_repo`.
 2. Skim `README.md` and follow the quick-start path (setup scripts, environment activation).
 3. Run the test suite (`npm test`, `pytest`, etc.) to verify the installation.
 4. Open the roadmap/backlog to understand active work streams.

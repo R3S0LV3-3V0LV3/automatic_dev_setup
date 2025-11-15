@@ -6,7 +6,7 @@ ADS-M04	04-python-ecosystem	Python Ecosystem	critical	python	#ads-m04-python-eco
 ADS-M05	05-development-stack	Development Stack	high	runtimes	#ads-m05-development-stack	Language runtime or toolchain installation failed (Node, Rust, Go, JVM, etc.).
 ADS-M06	06-database-systems	Database Systems	high	databases	#ads-m06-database-systems	Database service bootstrap or health check failed.
 ADS-M07	07-project-templates	Project Templates	low	content-sync	#ads-m07-project-templates	Template synchronisation or workspace scaffolding failed.
-ADS-M08	08-system-optimization	System Optimisation	medium	system-tuning	#ads-m08-system-optimisation	System optimisation, cleanup, or power profile adjustments failed.
+ADS-M08	08-system-optimisation	System Optimisation	medium	system-tuning	#ads-m08-system-optimisation	System optimisation, cleanup, or power profile adjustments failed.
 ADS-M09	09-integration-validation	Integration Validation	critical	validation	#ads-m09-integration-validation	Validation suite detected runtime or dependency regressions.
 ADS-M10	10-maintenance-setup	Maintenance Setup	medium	maintenance	#ads-m10-maintenance-setup	Maintenance launchd job provisioning failed or drift detected.
 ADS-R01	00-preflight	Resource Check	low	preflight	#ads-r01-resource-check	Available disk space is below the recommended threshold.

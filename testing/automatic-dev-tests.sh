@@ -395,6 +395,32 @@ PY
     fi
 }
 
+test_unit_suite() {
+    local harness="$SUITE_ROOT/tests/unit/test_ads_core.sh"
+    if [[ ! -x "$harness" ]]; then
+        test_fail "ADS core unit tests" "Harness missing at $harness"
+        return 1
+    fi
+    if "$harness"; then
+        test_pass "ADS core unit tests"
+    else
+        test_fail "ADS core unit tests" "Unit harness reported failures"
+    fi
+}
+
+test_version_locks() {
+    local verifier="$SUITE_ROOT/tools/ads-verify-versions.sh"
+    if [[ ! -x "$verifier" ]]; then
+        test_fail "Version lock verification" "Verifier missing at $verifier"
+        return 1
+    fi
+    if "$verifier"; then
+        test_pass "Version lock verification"
+    else
+        test_fail "Version lock verification" "Mismatch detected; review logs"
+    fi
+}
+
 test_python_suite() {
     if activate_ads_venv; then
         if ! command -v pytest >/dev/null 2>&1; then

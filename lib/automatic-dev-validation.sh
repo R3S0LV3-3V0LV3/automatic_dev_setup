@@ -7,6 +7,16 @@
 # Criticality: ALPHA
 # =============================================================================
 
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+    printf 'automatic-dev-validation.sh must be sourced, not executed directly.\n' >&2
+    exit 1
+fi
+
+if [[ -n "${ADS_VALIDATION_SH_LOADED:-}" ]]; then
+    return 0
+fi
+ADS_VALIDATION_SH_LOADED=1
+
 set -Eeuo pipefail
 IFS=$'\n\t'
 

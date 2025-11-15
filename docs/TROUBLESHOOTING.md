@@ -21,6 +21,13 @@ For most situations you can run `~/automatic_dev_setup/troubleshooting.sh`. The 
 
 ---
 
+## Resume & Restore Points
+
+- **Resume after an interruption:** `~/automatic_dev_setup/core/00-automatic-dev-orchestrator.sh --resume` restarts execution at the module immediately following the last recorded success in `~/.automatic_dev_setup/runtime/module-progress.log`. Combine with `--mode performance` if needed. The flag is ignored when `--only` is supplied.
+- **Create a manual restore point:** `~/automatic_dev_setup/tools/ads-create-restore-point.sh <label>` archives every path listed in `config/restore-manifest.txt` to `~/.automatic_dev_setup/backup`. Set `ADS_SKIP_BACKUP=1` if you need to bypass the automatic snapshot performed by `install.sh`.
+
+---
+
 ## <a id="ads-m01-system-bootstrap"></a>[ADS-M01] System Bootstrap & Preflight
 
 ### Gatekeeper Blocks Execution
@@ -37,7 +44,7 @@ Re-run the desired module.
    ```bash
    ~/automatic_dev_setup/core/00-automatic-dev-orchestrator.sh --only 01-system-bootstrap
    ```
-2. Confirm `~/automatic_dev_setup`, `~/.automatic_dev_setup`, and `~/coding_environment` are writable by the invoking user.
+2. Confirm `~/automatic_dev_setup`, `~/.automatic_dev_setup`, and `~/__github_repo` are writable by the invoking user.
 3. Inspect `~/.automatic_dev_setup/logs/failure-codes.log` for additional context.
 
 ---
@@ -162,7 +169,7 @@ mongosh --eval "db.runCommand({ping:1})"
 
 ## <a id="ads-m07-project-templates"></a>[ADS-M07] Project Templates
 
-**Symptom:** Template synchronisation fails or assets missing in `~/coding_environment/__project_templates`.
+**Symptom:** Template synchronisation fails or assets missing in `~/__github_repo/__project_templates`.
 
 **Fix:**
 ```bash
@@ -186,7 +193,7 @@ sudo pmset -a standby 1
 ```
 Re-run module 08 with `--standard` if desired:
 ```bash
-~/automatic_dev_setup/core/00-automatic-dev-orchestrator.sh --only 08-system-optimization --mode standard
+~/automatic_dev_setup/core/00-automatic-dev-orchestrator.sh --only 08-system-optimisation --mode standard
 ```
 For cleanup drift:
 ```bash

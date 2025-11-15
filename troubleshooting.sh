@@ -157,7 +157,7 @@ handle_ads_m08() {
         fi
     fi
     if prompt_yes_no "Re-run module 08 (system optimisation)?" Y; then
-        run_module "08-system-optimization"
+        run_module "08-system-optimisation"
     fi
 }
 

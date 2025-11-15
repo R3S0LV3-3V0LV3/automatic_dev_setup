@@ -16,6 +16,9 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 SUITE_ROOT="$REPO_ROOT"
 
 source "$(dirname "${BASH_SOURCE[0]}")/../lib/automatic-dev-env.sh"
+if ! declare -F ads_measure >/dev/null 2>&1; then
+    source "$REPO_ROOT/lib/automatic-dev-core.sh"
+fi
 
 ads_enable_traps
 ads_init_telemetry
@@ -53,7 +56,7 @@ declare -a ADS_MODULES=(
     "05-development-stack"
     "06-database-systems"
     "07-project-templates"
-    "08-system-optimization"
+    "08-system-optimisation"
     "09-integration-validation"
     "10-maintenance-setup"
     "11-comprehensive-audit"
@@ -65,6 +68,7 @@ declare -a SKIP_MODULES=()
 DRY_RUN=0
 MODE="${ADS_MODE:-standard}"
 IGNORE_RESOURCE_WARNINGS=0
+RESUME=0
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -103,6 +107,10 @@ while [[ $# -gt 0 ]]; do
             DRY_RUN=1
             shift
             ;;
+        --resume)
+            RESUME=1
+            shift
+            ;;
         --ignore-resource-warnings)
             IGNORE_RESOURCE_WARNINGS=1
             shift
@@ -118,6 +126,44 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
+
+determine_resume_start() {
+    local last_completed="$1"
+    local found=0
+    for module in "${ADS_MODULES[@]}"; do
+        if (( found )); then
+            START_MODULE="$module"
+            return 0
+        fi
+        if [[ "$module" == "$last_completed" ]]; then
+            found=1
+        fi
+    done
+    return 1
+}
+
+apply_resume_flag() {
+    if [[ -n "$ONLY_MODULE" ]]; then
+        log_warning "--resume ignored because --only is set."
+        return
+    fi
+    local last_module
+    last_module=$(ads_last_successful_module 2>/dev/null || true)
+    if [[ -z "$last_module" ]]; then
+        log_warning "No completed modules recorded; --resume has no effect."
+        return
+    fi
+    if determine_resume_start "$last_module"; then
+        log_info "Resuming from module following ${last_module} (${START_MODULE})"
+    else
+        log_info "All modules previously completed; nothing to resume."
+        exit 0
+    fi
+}
+
+if (( RESUME )) && [[ "${ADS_RESUME_ENABLED:-1}" == "1" ]]; then
+    apply_resume_flag
+fi
 
 export IGNORE_RESOURCE_WARNINGS
 
@@ -184,6 +230,7 @@ execute_modules() {
 
         if should_skip_module "$module"; then
             log_warning "Skipping module: $module"
+            ads_record_module_event "$module" "SKIPPED"
             continue
         fi
 
@@ -192,17 +239,26 @@ execute_modules() {
         log_header "Module $module_id: $module"
         if (( DRY_RUN )); then
             log_info "[DRY RUN] Would execute: $module_path"
+            ads_record_module_event "$module" "DRY-RUN"
             continue
         fi
 
+        ads_record_module_event "$module" "START"
+        local module_status
+        set +e
         ads_measure "$module" "$module_path"
-        echo "ads_measure exit code: $?"
+        module_status=$?
+        set -e
+        if (( module_status != 0 )); then
+            ads_record_module_event "$module" "FAILED"
+            return "$module_status"
+        fi
+        ads_record_module_event "$module" "SUCCESS"
         export ADS_FAILURE_CODE="ADS-UNSET"
     done
 }
 
 execute_modules
-echo "execute_modules completed."
 
 ads_generate_resource_assessment_doc
 

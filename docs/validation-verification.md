@@ -50,8 +50,8 @@ This canon describes the artefacts, checks, and procedures required to certify a
 5. **05-development-stack** – provisions Node + NVM, Rust (rustup), Go (tools + env), Ruby (rbenv 3.3.4), ensures Colima profile targeting `~/coding_environment`, updates deno/bun.
 6. **06-database-systems** – configures PostgreSQL@16 (memory tuned by mode), creates role `automatic_dev` with dev/test databases, writes redis and MongoDB configs bound to localhost, restarts services.
 7. **07-project-templates** – rsyncs `templates/` to `~/coding_environment/__project_templates` and refreshes project guidance.
-8. **08-system-optimization** – runs `brew cleanup`, purges stale caches (>30 days), and applies power settings (balanced vs. performance).
-9. **09-integration-validation** – executes `testing/automatic-dev-tests.sh`; report stored under `~/.automatic_dev_setup/logs/test-report-*.md`.
+8. **08-system-optimisation** – runs `brew cleanup`, purges stale caches (>30 days), and applies power settings (balanced vs. performance).
+9. **09-integration-validation** – executes `testing/automatic-dev-tests.sh` (Python suite, ADS unit harness, version-lock verifier); report stored under `~/.automatic_dev_setup/logs/test-report-*.md`.
 10. **10-maintenance-setup** – writes launchd plist `com.automatic-dev.maintenance`, targets nightly `brew update && brew upgrade && brew cleanup && pipx upgrade-all`, ensures backup directories exist.
 
 ---
@@ -75,6 +75,8 @@ This canon describes the artefacts, checks, and procedures required to certify a
 | Containers | `test_docker_cli`, `test_kubernetes_cli` | `docker`, `colima`, `kubectl`, `helm`, `k9s` | Tools installed (warn if daemons offline) |
 | Editor | `test_editor_stack` | `nvim` | Presence check |
 | Shell | `test_shell_startup_time` | Python harness launching interactive zsh | Warn if ≥2000 ms |
+| Quality | `test_unit_suite` | `tests/unit/test_ads_core.sh` | Validates guard clauses, checksum helpers, module progress tracking |
+| Accuracy | `test_version_locks` | `tools/ads-verify-versions.sh` | Confirms tool versions satisfy lock catalogue |
 
 Performance mode asserts additional CLI/casks are installed (hyperfine, glances, BetterTouchTool, etc.).
 
@@ -116,3 +118,10 @@ Performance mode asserts additional CLI/casks are installed (hyperfine, glances,
 7. Archive logs and the validation report for compliance records.
 
 Following this canon provides exhaustive assurance that Automatic Dev Setup completed successfully and remains operational.
+
+---
+
+## 11. Restore Points & Resumable Runs
+- `install.sh` now triggers `ads_create_restore_point` before any files are modified (disable with `ADS_SKIP_BACKUP=1`). The manifest (`config/restore-manifest.txt`) lists the critical files/directories captured in each archive under `~/.automatic_dev_setup/backup`.
+- On-demand snapshots: `./tools/ads-create-restore-point.sh <label> [custom paths…]`.
+- Every module write-through is recorded in `~/.automatic_dev_setup/runtime/module-progress.log`. Relaunching the orchestrator with `--resume` starts at the first module following the last successful entry, reducing rework after interruptions.

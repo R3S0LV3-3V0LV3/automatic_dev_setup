@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Comprehensive audit module (11-comprehensive-audit.sh) for system compliance
 - Bash update functionality in preflight.sh with --update-bash flag
 - ShellCheck compliance automation with auto-fixes
-- Performance optimizations for all shell scripts
+- Performance optimisations for all shell scripts
 - Essential modern CLI utilities (hyperfine, glow, entr, mkcert, etc.)
 - Google Cloud SDK integration
 - Proper GitHub documentation (README, LICENSE, CONTRIBUTING)
@@ -56,7 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Migrated from bash to more robust shell scripting
 - Improved Homebrew package management
-- Enhanced system optimization routines
+- Enhanced system optimisation routines
 
 ## [1.0.0] - 2024-01-01
 

@@ -70,7 +70,7 @@ cd automatic_dev_setup
 # Standard installation (balanced)
 ./install.sh --standard
 
-# Performance mode (additional optimization tools)
+# Performance mode (additional optimisation tools)
 ./install.sh --performance
 ```
 
@@ -88,6 +88,15 @@ cd automatic_dev_setup
 
 # Start from specific module
 ./core/00-automatic-dev-orchestrator.sh --start 05-development-stack
+
+# Resume after an interrupted run
+./core/00-automatic-dev-orchestrator.sh --resume
+
+# Verify locked tool versions
+./tools/ads-verify-versions.sh
+
+# Create an on-demand restore point
+./tools/ads-create-restore-point.sh manual-backup
 ```
 
 ## 📁 Project Structure

@@ -15,7 +15,7 @@ The Automatic Dev Setup requires administrator privileges for specific system-le
 | **03-shell-environment** | Shell change (`chsh`) if needed |
 | **05-development-stack** | Java symlink creation |
 | **06-database-systems** | Service management (PostgreSQL, Redis, MongoDB) |
-| **08-system-optimization** | Power management settings (`pmset`), DNS cache flush |
+| **08-system-optimisation** | Power management settings (`pmset`), DNS cache flush |
 | **10-maintenance-setup** | LaunchAgent installation |
 | **11-comprehensive-audit** | Bash installation (if `--update-bash` used) |
 

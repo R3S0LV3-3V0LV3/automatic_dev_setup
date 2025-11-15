@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC1091
 # =============================================================================
-# 08-system-optimization.sh - Automatic Dev Setup
+# 08-system-optimisation.sh - Automatic Dev Setup
 # Purpose: Apply performance tuning, cache management, and power optimisations.
 # Version: 3.0.0
 # Dependencies: bash, sudo, brew

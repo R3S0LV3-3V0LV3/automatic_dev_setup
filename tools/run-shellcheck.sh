@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+set -Eeuo pipefail
+IFS=$'\n\t'
 # =============================================================================
 # run-shellcheck.sh - Automatic Dev Setup
 # Purpose: Run shellcheck on all shell scripts in the repository.

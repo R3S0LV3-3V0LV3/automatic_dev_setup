@@ -12,7 +12,7 @@
 ## operations_setup/
 - `03-automatic-dev-shell.sh` — reruns module 03 (shell environment).
 - `04-automatic-dev-python.sh` — reruns module 04 (Python ecosystem).
-- `08-automatic-dev-optimize.sh` — reruns module 08 (system optimisation).
+- `08-automatic-dev-optimise.sh` — reruns module 08 (system optimisation).
 
 ## operations_support/
 - `09-automatic-dev-validate.sh` — reruns module 09 (integration validation).
@@ -25,11 +25,11 @@
 
 ## Supporting Assets
 - `automatic-dev-config.env` — shared configuration exporting the `ADS_*` variables.
-- `config/` — Homebrew Brewfile, Python requirements, and constraint pinning.
+- `config/` — Homebrew Brewfile, Python requirements, constraint pinning, `version-locks.tsv`, `download-checksums.tsv`, and `restore-manifest.txt`.
 - `lib/` — shared helpers (`automatic-dev-core.sh`, error handling, logging, validation).
 - `templates/` — starter notebooks, scripts, Docker assets, and cheat sheets.
 - `testing/` — `automatic-dev-tests.sh` validation harness invoked by module 09.
-- `tools/` — `automatic-dev-container-suite.sh` for Colima/kind/Kubernetes helpers.
+- `tools/` — orchestration helpers plus `automatic-dev-container-suite.sh`, `ads-verify-versions.sh`, and `ads-create-restore-point.sh`.
 - `maintenance/` — launchd artefacts; module 10 writes `com.automatic-dev.maintenance.plist` here.
 - `docs/` — `MANIFEST.md`, `CHANGELOG.md`, `TROUBLESHOOTING.md`, `validation-verification.md`.
 

@@ -59,6 +59,18 @@ initialize_database_paths() {
     INITDB="${PG_BIN}/initdb"
 }
 
+remove_legacy_postgres_services() {
+    local service
+    while IFS= read -r service; do
+        [[ -z "$service" ]] && continue
+        [[ "$service" == "postgresql@16" ]] && continue
+        log_warning "Stopping and uninstalling legacy PostgreSQL service '${service}'."
+        brew services stop "$service" >/dev/null 2>&1 || true
+        launchctl remove "homebrew.mxcl.${service}" >/dev/null 2>&1 || true
+        brew uninstall --force "$service" >/dev/null 2>&1 || log_warning "Unable to uninstall ${service}; manual cleanup may be required."
+    done < <(brew list --formula 2>/dev/null | grep -E '^postgresql@' || true)
+}
+
 calculate_pg_memory() {
     local total_bytes
     total_bytes=$(sysctl -n hw.memsize)
@@ -127,12 +139,31 @@ wait_for_postgres() {
         log_error "pg_isready utility not found at ${pg_isready}"
         return 1
     fi
-    for _ in {1..30}; do
+
+    local attempt=0
+    local max_attempts=40
+    while (( attempt < max_attempts )); do
         if "$pg_isready" >/dev/null 2>&1; then
             return 0
         fi
+        ((attempt++))
         sleep 2
     done
+
+    log_warning "PostgreSQL did not report ready after ${max_attempts} checks; forcing service restart."
+    brew services restart postgresql@16 >/dev/null 2>&1 || log_warning "brew services restart postgresql@16 failed."
+    "${PG_BIN}/pg_ctl" -D "${BREW_PREFIX}/var/postgresql@16" start >/dev/null 2>&1 || true
+
+    attempt=0
+    max_attempts=30
+    while (( attempt < max_attempts )); do
+        if "$pg_isready" >/dev/null 2>&1; then
+            return 0
+        fi
+        ((attempt++))
+        sleep 2
+    done
+
     log_error "PostgreSQL service did not become ready in time."
     return 1
 }
@@ -244,6 +275,7 @@ main() {
     log_info "Database configuration mode: ${ADS_MODE}"
     ads_require_command brew "Install Homebrew via module 02"
     initialize_database_paths
+    remove_legacy_postgres_services
     init_postgres
     wait_for_postgres
     configure_postgres

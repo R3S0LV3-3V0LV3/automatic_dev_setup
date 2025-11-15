@@ -7,6 +7,16 @@
 # Criticality: ALPHA
 # =============================================================================
 
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+    printf 'automatic-dev-logging.sh must be sourced, not executed directly.\n' >&2
+    exit 1
+fi
+
+if [[ -n "${ADS_LOGGING_SH_LOADED:-}" ]]; then
+    return 0
+fi
+ADS_LOGGING_SH_LOADED=1
+
 set -Eeuo pipefail
 IFS=$'\n\t'
 
@@ -39,7 +49,7 @@ _ads_context() {
 _ads_log() {
     local level="$1"
     local message="$2"
-    local color="$3"
+    local colour="$3"
     local emoji="$4"
 
     local timestamp
@@ -52,7 +62,7 @@ _ads_log() {
 
     # Console output with colourised summary
     if [[ -t 1 ]]; then
-        printf '%b%s%b %s\n' "$color" "$emoji" '\033[0m' "$message"
+        printf '%b%s%b %s\n' "$colour" "$emoji" '\033[0m' "$message"
     else
         printf '%s %s\n' "$emoji" "$message"
     fi

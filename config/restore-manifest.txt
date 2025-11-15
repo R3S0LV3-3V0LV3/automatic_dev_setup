@@ -1,0 +1,9 @@
+# Paths to capture in automatic restore points (evaluated in bash)
+$HOME/.zprofile
+$HOME/.zshrc
+$HOME/.bash_profile
+$HOME/.bashrc
+$HOME/.config/automatic-dev/
+$HOME/coding_environment/__project-formatting.txt
+$HOME/coding_environment/__project_templates/
+$HOME/.automatic_dev_setup/

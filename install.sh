@@ -13,6 +13,10 @@ IFS=$'\n\t'
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+source "$REPO_ROOT/lib/automatic-dev-env.sh"
+ads_enable_traps
+log_header "[Install] Automatic Dev Setup"
+
 # Work out who's actually running this — could be sudo, could be direct
 # We need the real user, not root masquerading as helpful
 if [[ -n "${SUDO_USER:-}" && "$SUDO_USER" != "root" ]]; then
@@ -51,15 +55,16 @@ done
 
 request_sudo_upfront() {
     # Request sudo upfront and keep it alive throughout the script
-    echo "[Setup] This installation requires administrator privileges for certain operations."
-    echo "[Setup] You may be prompted for your password now."
+    log_info "[Setup] Administrator privileges are required for specific steps."
+    log_info "[Setup] Prompting for sudo authentication now."
     
     if ! sudo -v; then
-        echo "[Setup] ERROR: Unable to obtain sudo privileges. Installation cannot proceed."
+        log_error "[Setup] Unable to obtain sudo privileges. Installation cannot proceed."
         exit 1
     fi
     
     # Keep sudo alive in background
+    log_debug "[Setup] Maintaining sudo ticket in the background."
     while true; do 
         sudo -n true
         sleep 50
@@ -68,13 +73,24 @@ request_sudo_upfront() {
     SUDO_KEEPER_PID=$!
 }
 
+create_restore_point_if_enabled() {
+    if [[ "${ADS_SKIP_BACKUP:-0}" == "1" ]]; then
+        log_info "[Setup] Skipping restore point creation (ADS_SKIP_BACKUP=1)."
+        return 0
+    fi
+    log_info "[Setup] Creating restore point for critical files..."
+    if ! ads_create_restore_point "pre-install"; then
+        log_warning "[Setup] Restore point creation encountered issues; continuing without snapshot."
+    fi
+}
+
 copy_suite() {
     if [[ "$REPO_ROOT" == "$INSTALL_ROOT" ]]; then
-        echo "[Setup] Detected existing installation at $INSTALL_ROOT; skipping copy."
+        log_info "[Setup] Detected existing installation at $INSTALL_ROOT; skipping copy."
         return 0
     fi
 
-    echo "[Setup] Installing Automatic Dev Setup into $INSTALL_ROOT"
+    log_info "[Setup] Installing Automatic Dev Setup into $INSTALL_ROOT"
     mkdir -p "$INSTALL_ROOT"
     if command -v rsync >/dev/null 2>&1; then
         rsync -a --delete \
@@ -84,17 +100,19 @@ copy_suite() {
             --exclude 'logs/' \
             "$REPO_ROOT/" "$INSTALL_ROOT/"
     else
-        echo "[Setup] rsync not available; falling back to cp -R (no deletions)."
+        log_warning "[Setup] rsync not available; falling back to cp -R (no deletions)."
         cp -R "$REPO_ROOT/." "$INSTALL_ROOT/"
     fi
 
     if [[ "$(id -u)" -eq 0 ]]; then
         chown -R "$TARGET_USER":"$(id -gn "$TARGET_USER")" "$INSTALL_ROOT"
     fi
+
+    log_success "[Setup] Suite staged at $INSTALL_ROOT"
 }
 
 ensure_executables() {
-    echo "[Setup] Ensuring shell scripts are executable…"
+    log_info "[Setup] Ensuring shell scripts are executable…"
     find "$INSTALL_ROOT" -type f -name "*.sh" -exec chmod 755 {} +
 }
 
@@ -109,9 +127,10 @@ run_workflow() {
     local cmd=("$runner_path" "${MODE_ARGS[@]}")
 
     if [[ "$(id -un)" != "$TARGET_USER" ]]; then
-        echo "[Setup] Launching workflow as $TARGET_USER"
+        log_info "[Setup] Launching workflow as $TARGET_USER"
         sudo -H -u "$TARGET_USER" "${cmd[@]}"
     else
+        log_info "[Setup] Launching workflow as $TARGET_USER"
         "${cmd[@]}"
     fi
 }
@@ -120,14 +139,16 @@ run_workflow() {
 cleanup() {
     if [[ -n "${SUDO_KEEPER_PID:-}" ]]; then
         kill "$SUDO_KEEPER_PID" 2>/dev/null || true
+        unset SUDO_KEEPER_PID
     fi
 }
 
-# Set trap for cleanup
-trap cleanup EXIT
+# Ensure cleanup runs alongside ADS exit handling
+trap 'cleanup; ads_on_exit' EXIT
 
 # Main execution
 request_sudo_upfront
+create_restore_point_if_enabled
 copy_suite
 ensure_executables
 run_workflow

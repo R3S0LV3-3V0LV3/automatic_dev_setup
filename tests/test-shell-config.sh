@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+set -Eeuo pipefail
+IFS=$'\n\t'
 # =============================================================================
 # test-shell-config.sh - Test shell configuration structure
 # Purpose: Validate that shell configuration files follow the expected structure
