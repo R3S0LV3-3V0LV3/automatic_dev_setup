@@ -67,6 +67,8 @@ secrets/
 dependency-graph.png
 dependency-graph.dot
 SETUP_AUDIT_REPORT.md
+docs/.audit_grade_system.md
+docs/.TRANSCENDENCY_DIRECTIVE.md
 
 # Test Coverage
 htmlcov/
